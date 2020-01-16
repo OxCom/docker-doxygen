@@ -1,0 +1,83 @@
+version: 2
+jobs:
+    build_alpine:
+        docker:
+            -   image: circleci/buildpack-deps
+        steps:
+            - checkout
+            - setup_remote_docker
+            -   run:
+                    name: "Build alpine image"
+                    command: |
+                        docker login -u ${DOCKER_HUB_USER_ID} -p ${DOCKER_HUB_PWD}
+                        docker build . --rm --tag ${DOCKER_HUB_USER_ID}/doxygen:alpine --tag ${DOCKER_HUB_USER_ID}/doxygen:alpine-${CIRCLE_TAG} --tag ${DOCKER_HUB_USER_ID}/doxygen:alpine-latest -f alpine/Dockerfile
+            -   run:
+                    name: "Publish alpine image"
+                    command: |
+                        docker push ${DOCKER_HUB_USER_ID}/doxygen:alpine
+                        docker push ${DOCKER_HUB_USER_ID}/doxygen:alpine-latest
+                        docker push ${DOCKER_HUB_USER_ID}/doxygen:alpine-${CIRCLE_TAG}
+
+    build_debian:
+        filters:
+            tags:
+                only: /.*/
+        docker:
+            -   image: circleci/buildpack-deps
+        steps:
+            - checkout
+            - setup_remote_docker
+            -   run:
+                    name: "Build debian image"
+                    command: |
+                        docker login -u ${DOCKER_HUB_USER_ID} -p ${DOCKER_HUB_PWD}
+                        docker build . --rm --tag ${DOCKER_HUB_USER_ID}/doxygen:debian --tag ${DOCKER_HUB_USER_ID}/doxygen:debian-${CIRCLE_TAG} --tag ${DOCKER_HUB_USER_ID}/doxygen:debian-latest -f debian/Dockerfile
+            -   run:
+                    name: "Publish debian image"
+                    command: |
+                        docker push ${DOCKER_HUB_USER_ID}/doxygen:debian
+                        docker push ${DOCKER_HUB_USER_ID}/doxygen:debian-latest
+                        docker push ${DOCKER_HUB_USER_ID}/doxygen:debian-${CIRCLE_TAG}
+
+    build_centos:
+        docker:
+            -   image: circleci/buildpack-deps
+        steps:
+            - checkout
+            - setup_remote_docker
+            -   run:
+                    name: "Build centos image"
+                    command: |
+                        docker login -u ${DOCKER_HUB_USER_ID} -p ${DOCKER_HUB_PWD}
+                        docker build . --rm --tag ${DOCKER_HUB_USER_ID}/doxygen:centos --tag ${DOCKER_HUB_USER_ID}/doxygen:centos-${CIRCLE_TAG} --tag ${DOCKER_HUB_USER_ID}/doxygen:centos-latest -f centos/Dockerfile
+            -   run:
+                    name: "Publish centos image"
+                    command: |
+                        docker push ${DOCKER_HUB_USER_ID}/doxygen:centos
+                        docker push ${DOCKER_HUB_USER_ID}/doxygen:centos-latest
+                        docker push ${DOCKER_HUB_USER_ID}/doxygen:centos-${CIRCLE_TAG}
+
+workflows:
+    version: 2
+    deploy:
+        jobs:
+            -   build_alpine:
+                    filters:
+                        tags:
+                            only: /^.*/
+                        branches:
+                            ignore: /.*/
+
+            -   build_debian:
+                    filters:
+                        tags:
+                            only: /^.*/
+                        branches:
+                            ignore: /.*/
+
+            -   build_centos:
+                    filters:
+                        tags:
+                            only: /^.*/
+                        branches:
+                            ignore: /.*/
